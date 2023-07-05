@@ -6,39 +6,42 @@ This quick guide is applicable from Kubernetes version `1.24+` onward. See [http
 
 ## Provisioning VMs with all necessary tools
 ```sh
-$ git clone https://github.com/vancanhuit/vagrant-k8s.git
-$ cd vagrant-k8s
-$ vagrant up
-$ vagrant reload
+git clone https://github.com/vancanhuit/vagrant-k8s.git
+cd vagrant-k8s
+vagrant up
+vagrant reload
 ```
 
 ## Initializing master node
 After all VMs are provisioned, follow this [guide](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/) to setup our cluster:
 
 ```sh
-$ vagrant ssh master
-$ sudo kubeadm init --apiserver-advertise-address=192.168.56.10 --pod-network-cidr=10.244.0.0/16
-$ mkdir -p $HOME/.kube
-$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+vagrant ssh master
+```
+
+```sh
+sudo kubeadm init --apiserver-advertise-address=192.168.56.10 --pod-network-cidr=10.244.0.0/16
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 Install [Calico](https://projectcalico.docs.tigera.io/getting-started/kubernetes/quickstart) (we may choose another Pod network add-on from [here](https://kubernetes.io/docs/concepts/cluster-administration/networking/#how-to-implement-the-kubernetes-networking-model) instead) to finish setting up our master node:
 
 ```sh
-$ kubectl create -f /vagrant/tigera-operator.yaml
-$ kubectl create -f /vagrant/custom-resources.yaml
+kubectl create -f /vagrant/tigera-operator.yaml
+kubectl create -f /vagrant/custom-resources.yaml
 ```
 
 ## Joining worker nodes
 ```sh
-$ vagrant ssh worker-1
-$ sudo kubeadm join 192.168.56.10:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
+vagrant ssh worker-1
+sudo kubeadm join 192.168.56.10:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
 ```
 The join command can be found after running the `kubeadm init` command above but we can find token and hash values by running the following commands on the master node:
 
 ```sh
-$ kubeadm token list
-$ openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | \
+kubeadm token list
+openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | \
    openssl rsa -pubin -outform der 2>/dev/null | \
    openssl dgst -sha256 -hex | sed 's/^.* //'
 ```

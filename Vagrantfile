@@ -12,6 +12,7 @@ Vagrant.configure("2") do |config|
   config.vm.define "master" do |node|
     node.vm.hostname = "master"
     node.vm.network "private_network", ip: "192.168.56.10"
+    node.vm.network "forwarded_port", guest:6443 , host:6443  
   end
 
   (1..2).each do |i|
